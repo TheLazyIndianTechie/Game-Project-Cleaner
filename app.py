@@ -11,7 +11,8 @@ def select_directory():
 def scan_directories(base_path, search_terms, ignore_terms):
     matching_dirs = []
     for root, dirs, files in tqdm(os.walk(base_path), desc="Scanning directories"):
-        dirs[:] = [d for d in dirs if d not in ignore_terms]  # Modify dirs in-place to skip ignored directories
+        # Filter out ignored directories
+        dirs[:] = [d for d in dirs if not any(ignore_term.lower() == d.lower() for ignore_term in ignore_terms)]
         for dir_name in dirs:
             if any(term.lower() == dir_name.lower() for term in search_terms):
                 matching_dirs.append(os.path.join(root, dir_name))
@@ -19,7 +20,12 @@ def scan_directories(base_path, search_terms, ignore_terms):
 
 def delete_directories(directories):
     for dir_path in tqdm(directories, desc="Deleting directories"):
-        shutil.rmtree(dir_path)
+        try:
+            shutil.rmtree(dir_path)
+        except PermissionError:
+            print(f"Permission denied: {dir_path}")
+        except Exception as e:
+            print(f"Error deleting {dir_path}: {e}")
 
 def get_terms(file_name):
     if not os.path.exists(file_name):
