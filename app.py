@@ -1,87 +1,51 @@
 import os
 import shutil
-import sys
-import tkinter as tk
-from tkinter import messagebox, filedialog;
+from tqdm import tqdm
+from tkinter import Tk, filedialog
 
-def find_unreal_projects(root_dir, progress_callback):
-    """Find all Unreal Engine 5 projects in the given directory and subdirectories"""
-    unreal_projects = []
-    for i, (root, dirs, files) in enumerate(os.walk(root_dir), start=1):
-        progress_callback(f"Scanning directory {os.path.relpath(root, root_dir)} ({i}/{len(list(os.walk(root_dir)))})")
-        if ".uproject" in files:
-            unreal_projects.append(os.path.relpath(root, root_dir))
-    return unreal_projects
+def select_directory():
+    Tk().withdraw()  # We don't want a full GUI, so keep the root window from appearing
+    directory = filedialog.askdirectory()  # Show an "Open" dialog box and return the path to the selected folder
+    return directory
 
-def find_intermediate_dirs(project_dir, progress_callback):
-    """Find all folders named 'Intermediate' in the given Unreal Engine project directory"""
-    intermediate_dirs = []
-    for i, (root, dirs, files) in enumerate(os.walk(project_dir), start=1):
-        progress_callback(f"Scanning directory {os.path.relpath(root, project_dir)} ({i}/{len(list(os.walk(project_dir)))})")
-        if "intermediate" in dirs:
-            intermediate_dirs.append(os.path.relpath(root, project_dir))
-    return intermediate_dirs
+def scan_directories(base_path, search_term):
+    matching_dirs = []
+    for root, dirs, files in tqdm(os.walk(base_path), desc="Scanning directories"):
+        for dir_name in dirs:
+            if search_term.lower() in dir_name.lower():
+                matching_dirs.append(os.path.join(root, dir_name))
+    return matching_dirs
 
-def find_derived_data_cache_dirs(project_dir, progress_callback):
-    """Find all folders named 'DerivedDataCache' in the given Unreal Engine project directory"""
-    derived_data_cache_dirs = []
-    for i, (root, dirs, files) in enumerate(os.walk(project_dir), start=1):
-        progress_callback(f"Scanning directory {os.path.relpath(root, project_dir)} ({i}/{len(list(os.walk(project_dir)))})")
-        if "DerivedDataCache" in dirs:
-            derived_data_cache_dirs.append(os.path.relpath(root, project_dir))
-    return derived_data_cache_dirs
+def delete_directories(directories):
+    for dir_path in tqdm(directories, desc="Deleting directories"):
+        shutil.rmtree(dir_path)
 
-def find_saved_dirs(project_dir, progress_callback):
-    """Find all folders named 'Saved' in the given Unreal Engine project directory"""
-    saved_dirs = []
-    for i, (root, dirs, files) in enumerate(os.walk(project_dir), start=1):
-        progress_callback(f"Scanning directory {os.path.relpath(root, project_dir)} ({i}/{len(list(os.walk(project_dir)))})")
-        if "Saved" in dirs:
-            saved_dirs.append(os.path.relpath(root, project_dir))
-    return saved_dirs
-
-def get_all_dirs_to_delete(unreal_projects, progress_callback):
-    """Find all intermediate, DerivedDataCache, and Saved folders in all Unreal Engine projects"""
-    all_dirs_to_delete = []
-    for i, project in enumerate(unreal_projects, start=1):
-        progress_callback(f"Scanning project {project} ({i}/{len(unreal_projects)})")
-        intermediate_dirs = find_intermediate_dirs(project, progress_callback)
-        derived_data_cache_dirs = find_derived_data_cache_dirs(project, progress_callback)
-        saved_dirs = find_saved_dirs(project, progress_callback)
-        all_dirs_to_delete.extend(intermediate_dirs)
-        all_dirs_to_delete.extend(derived_data_cache_dirs)
-        all_dirs_to_delete.extend(saved_dirs)
-    return all_dirs_to_delete
-
-def delete_dirs_to_delete(dirs_to_delete, progress_callback):
-    """Delete all directories in the given list"""
-    for i, dir in enumerate(dirs_to_delete, start=1):
-        progress_callback(f"Deleting directory {dir} ({i}/{len(dirs_to_delete)})")
-        try:
-            shutil.rmtree(dir)
-        except OSError as e:
-            print(f"Error: {e.filename} - {e.strerror}")
-    
 def main():
-    """Main function of the tool"""
-    root = tk.Tk()
-    root.title("Unreal Engine Cleanup Tool")
-
-    root_dir = tk.filedialog.askdirectory()
-    unreal_projects = find_unreal_projects(root_dir, lambda msg: print(msg))
-    dirs_to_delete = get_all_dirs_to_delete(unreal_projects, lambda msg: print(msg))
-    print(f"The following directories will be deleted:")
-    for dir in dirs_to_delete:
-        print(f"- {dir}")
-    resp = input("y/n: ")
-    if resp.lower() == 'y':
-        delete_dirs_to_delete(dirs_to_delete, lambda msg: print(msg))
-        print("All directories have been deleted.")
+    print("Select the base directory for the cleanup operation:")
+    base_directory = select_directory()
+    
+    if not base_directory:
+        print("No directory selected. Exiting.")
+        return
+    
+    search_term = input("Enter the search term to match directories: ")
+    matching_dirs = scan_directories(base_directory, search_term)
+    
+    if not matching_dirs:
+        print(f"No directories found matching the term '{search_term}'.")
+        return
+    
+    print("The following directories match your search term:")
+    for dir_path in matching_dirs:
+        print(dir_path)
+    
+    confirm = input("Do you want to delete these directories? (y/n): ").strip().lower()
+    
+    if confirm == 'y':
+        delete_directories(matching_dirs)
+        print("Directories deleted successfully.")
     else:
-        print("No directories have been deleted.")
-    root.destroy();
+        print("Operation canceled.")
 
 if __name__ == "__main__":
     main()
-    
-
