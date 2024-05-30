@@ -8,9 +8,10 @@ def select_directory():
     directory = filedialog.askdirectory()
     return directory
 
-def scan_directories(base_path, search_terms):
+def scan_directories(base_path, search_terms, ignore_terms):
     matching_dirs = []
     for root, dirs, files in tqdm(os.walk(base_path), desc="Scanning directories"):
+        dirs[:] = [d for d in dirs if d not in ignore_terms]  # Modify dirs in-place to skip ignored directories
         for dir_name in dirs:
             if any(term.lower() == dir_name.lower() for term in search_terms):
                 matching_dirs.append(os.path.join(root, dir_name))
@@ -20,16 +21,10 @@ def delete_directories(directories):
     for dir_path in tqdm(directories, desc="Deleting directories"):
         shutil.rmtree(dir_path)
 
-def get_search_terms(option):
-    file_map = {
-        '1': 'unity-file-list.txt',
-        '2': 'unreal-file-list.txt',
-        '3': 'godot-file-list.txt'
-    }
-    file_path = file_map.get(option)
-    if not file_path or not os.path.exists(file_path):
+def get_terms(file_name):
+    if not os.path.exists(file_name):
         return []
-    with open(file_path, 'r') as file:
+    with open(file_name, 'r') as file:
         return [line.strip() for line in file.readlines()]
 
 def filter_top_level_directories(directories):
@@ -54,12 +49,25 @@ def main():
     print("3. Godot")
     option = input("Enter the number corresponding to your choice: ").strip()
     
-    search_terms = get_search_terms(option)
-    if not search_terms:
-        print("Invalid option or no search terms found. Exiting.")
+    file_map = {
+        '1': ('unity-file-list.txt', 'unity-ignore-list.txt'),
+        '2': ('unreal-file-list.txt', 'unreal-ignore-list.txt'),
+        '3': ('godot-file-list.txt', 'godot-ignore-list.txt')
+    }
+    
+    if option not in file_map:
+        print("Invalid option. Exiting.")
         return
     
-    matching_dirs = scan_directories(base_directory, search_terms)
+    search_file, ignore_file = file_map[option]
+    search_terms = get_terms(search_file)
+    ignore_terms = get_terms(ignore_file)
+    
+    if not search_terms:
+        print("No search terms found. Exiting.")
+        return
+    
+    matching_dirs = scan_directories(base_directory, search_terms, ignore_terms)
     matching_dirs = filter_top_level_directories(matching_dirs)
     
     if not matching_dirs:
