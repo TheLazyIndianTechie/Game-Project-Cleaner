@@ -59,6 +59,14 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 
 Feel free to submit issues or pull requests. Contributions are welcome!
 
+## ❤️ Support
+
+If you find this project helpful and want to support my work, consider donating:
+
+- [Buy me a coffee on Ko-fi](https://ko-fi.com/thelazyindiantechie)
+- [Support me on Patreon](https://www.patreon.com/thelazyindiantechie)
+  
+
 ## 👤 Author
 
 - **TheLazyIndianTechie** - [GitHub](https://github.com/TheLazyIndianTechie)
