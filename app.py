@@ -1,5 +1,6 @@
 import os
 import shutil
+import sys
 import tkinter as tk
 from tkinter import messagebox, filedialog;
 
@@ -17,7 +18,7 @@ def find_intermediate_dirs(project_dir, progress_callback):
     intermediate_dirs = []
     for i, (root, dirs, files) in enumerate(os.walk(project_dir), start=1):
         progress_callback(f"Scanning directory {os.path.relpath(root, project_dir)} ({i}/{len(list(os.walk(project_dir)))})")
-        if "Intermediate" in dirs:
+        if "intermediate" in dirs:
             intermediate_dirs.append(os.path.relpath(root, project_dir))
     return intermediate_dirs
 
@@ -69,17 +70,18 @@ def main():
     root_dir = tk.filedialog.askdirectory()
     unreal_projects = find_unreal_projects(root_dir, lambda msg: print(msg))
     dirs_to_delete = get_all_dirs_to_delete(unreal_projects, lambda msg: print(msg))
-    msg = "The following directories will be deleted:\n"
+    print(f"The following directories will be deleted:")
     for dir in dirs_to_delete:
-        msg += f"- {dir}\n"
-    resp = messagebox.askyesno(title="Confirm", message=msg)
-    if resp:
+        print(f"- {dir}")
+    resp = input("y/n: ")
+    if resp.lower() == 'y':
         delete_dirs_to_delete(dirs_to_delete, lambda msg: print(msg))
-        messagebox.showinfo(title="Complete", message="All directories have been deleted.")
+        print("All directories have been deleted.")
     else:
-        messagebox.showinfo(title="Cancelled", message="No directories have been deleted.")
+        print("No directories have been deleted.")
     root.destroy();
 
 if __name__ == "__main__":
     main()
+    
 
