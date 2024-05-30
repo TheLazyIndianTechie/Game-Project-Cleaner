@@ -12,7 +12,7 @@ def scan_directories(base_path, search_terms):
     matching_dirs = []
     for root, dirs, files in tqdm(os.walk(base_path), desc="Scanning directories"):
         for dir_name in dirs:
-            if any(term.lower() in dir_name.lower() for term in search_terms):
+            if any(term.lower() == dir_name.lower() for term in search_terms):
                 matching_dirs.append(os.path.join(root, dir_name))
     return matching_dirs
 
@@ -31,6 +31,14 @@ def get_search_terms(option):
         return []
     with open(file_path, 'r') as file:
         return [line.strip() for line in file.readlines()]
+
+def filter_top_level_directories(directories):
+    directories = sorted(directories, key=len)  # Sort directories by length
+    filtered_dirs = []
+    for dir_path in directories:
+        if not any(dir_path.startswith(existing_dir + os.sep) for existing_dir in filtered_dirs):
+            filtered_dirs.append(dir_path)
+    return filtered_dirs
 
 def main():
     print("Select the base directory for the cleanup operation:")
@@ -52,6 +60,7 @@ def main():
         return
     
     matching_dirs = scan_directories(base_directory, search_terms)
+    matching_dirs = filter_top_level_directories(matching_dirs)
     
     if not matching_dirs:
         print("No directories found matching the search terms.")
