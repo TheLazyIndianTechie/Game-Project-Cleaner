@@ -1,2 +1,5 @@
 Assets
 ProjectSettings
+UserSettings
+Packages
+.git

@@ -1,2 +1,5 @@
 Config
 Content
+Plugins
+Saved
+.git
