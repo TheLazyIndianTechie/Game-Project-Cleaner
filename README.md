@@ -1,5 +1,5 @@
 
-# Unreal Unity Cleanup Tool
+# Game Project Cleaner
 
 A simple command line tool to clean up Library, Intermediate, and other folders in Unreal Engine and Unity projects based on search queries.
 
