@@ -3,6 +3,10 @@
 
 A simple command line tool to clean up Library, Intermediate, and other folders in Unreal Engine and Unity projects based on search queries.
 
+## ⚠️ Warning
+
+**Use this tool at your own risk.** This script will permanently delete directories that match the search term. Ensure you review the directories listed before confirming deletion. The author is not responsible for any data loss or unintended deletions.
+
 ## Features
 
 - Recursively scans specified directories for matching folders.
