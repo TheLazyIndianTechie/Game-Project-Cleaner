@@ -17,29 +17,37 @@ A simple command line tool to clean up Library, Intermediate, and other folders 
 
 ## Requirements
 
-- Python 3.x
+- `Python 3.x` - Preferably Python 3.9
 - `colorama==0.4.6`
 - `tqdm==4.66.4`
 
 ## Installation
 
 1. Clone the repository:
+   ```sh
    git clone https://github.com/TheLazyIndianTechie/GameProjectCleaner.git
    cd GameProjectCleaner
+   ```
 
 2. Create and activate a virtual environment:
+3. ```sh
    python -m venv venv
    source venv/bin/activate  # On Windows use `venv\Scripts\activate`
+   ```
 
-3. Install the required libraries:
+4. Install the required libraries:
+   ```sh
    pip install -r requirements.txt
+   ```
 
 ## Usage
 
 1. Run the script:
+   ```sh
    python app.py
-
-2. Follow the prompts:
+   ```
+   
+3. Follow the prompts:
    - Select the base directory.
    - Choose the type of project to clean (Unity, Unreal, or Godot).
    - Enter the search term to match directories.
