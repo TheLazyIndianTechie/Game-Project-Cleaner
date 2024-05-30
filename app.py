@@ -4,21 +4,33 @@ from tqdm import tqdm
 from tkinter import Tk, filedialog
 
 def select_directory():
-    Tk().withdraw()  # We don't want a full GUI, so keep the root window from appearing
-    directory = filedialog.askdirectory()  # Show an "Open" dialog box and return the path to the selected folder
+    Tk().withdraw()
+    directory = filedialog.askdirectory()
     return directory
 
-def scan_directories(base_path, search_term):
+def scan_directories(base_path, search_terms):
     matching_dirs = []
     for root, dirs, files in tqdm(os.walk(base_path), desc="Scanning directories"):
         for dir_name in dirs:
-            if search_term.lower() in dir_name.lower():
+            if any(term.lower() in dir_name.lower() for term in search_terms):
                 matching_dirs.append(os.path.join(root, dir_name))
     return matching_dirs
 
 def delete_directories(directories):
     for dir_path in tqdm(directories, desc="Deleting directories"):
         shutil.rmtree(dir_path)
+
+def get_search_terms(option):
+    file_map = {
+        '1': 'unity-file-list.txt',
+        '2': 'unreal-file-list.txt',
+        '3': 'godot-file-list.txt'
+    }
+    file_path = file_map.get(option)
+    if not file_path or not os.path.exists(file_path):
+        return []
+    with open(file_path, 'r') as file:
+        return [line.strip() for line in file.readlines()]
 
 def main():
     print("Select the base directory for the cleanup operation:")
@@ -28,14 +40,24 @@ def main():
         print("No directory selected. Exiting.")
         return
     
-    search_term = input("Enter the search term to match directories: ")
-    matching_dirs = scan_directories(base_directory, search_term)
+    print("Choose the type of project to clean:")
+    print("1. Unity")
+    print("2. Unreal")
+    print("3. Godot")
+    option = input("Enter the number corresponding to your choice: ").strip()
     
-    if not matching_dirs:
-        print(f"No directories found matching the term '{search_term}'.")
+    search_terms = get_search_terms(option)
+    if not search_terms:
+        print("Invalid option or no search terms found. Exiting.")
         return
     
-    print("The following directories match your search term:")
+    matching_dirs = scan_directories(base_directory, search_terms)
+    
+    if not matching_dirs:
+        print("No directories found matching the search terms.")
+        return
+    
+    print("The following directories match your search terms:")
     for dir_path in matching_dirs:
         print(dir_path)
     
