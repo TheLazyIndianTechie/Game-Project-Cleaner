@@ -8,24 +8,38 @@ def select_directory():
     directory = filedialog.askdirectory()
     return directory
 
+def get_directory_size(path):
+    total_size = 0
+    for dirpath, dirnames, filenames in os.walk(path):
+        for filename in filenames:
+            filepath = os.path.join(dirpath, filename)
+            total_size += os.path.getsize(filepath)
+    return total_size
+
 def scan_directories(base_path, search_terms, ignore_terms):
     matching_dirs = []
+    total_size = 0
     for root, dirs, files in tqdm(os.walk(base_path), desc="Scanning directories"):
         # Filter out ignored directories
         dirs[:] = [d for d in dirs if not any(ignore_term.lower() == d.lower() for ignore_term in ignore_terms)]
         for dir_name in dirs:
             if any(term.lower() == dir_name.lower() for term in search_terms):
-                matching_dirs.append(os.path.join(root, dir_name))
-    return matching_dirs
+                dir_path = os.path.join(root, dir_name)
+                matching_dirs.append(dir_path)
+                total_size += get_directory_size(dir_path)
+    return matching_dirs, total_size
 
 def delete_directories(directories):
+    total_size_freed = 0
     for dir_path in tqdm(directories, desc="Deleting directories"):
+        total_size_freed += get_directory_size(dir_path)
         try:
             shutil.rmtree(dir_path)
         except PermissionError:
             print(f"Permission denied: {dir_path}")
         except Exception as e:
             print(f"Error deleting {dir_path}: {e}")
+    return total_size_freed
 
 def get_terms(file_name):
     if not os.path.exists(file_name):
@@ -40,6 +54,12 @@ def filter_top_level_directories(directories):
         if not any(dir_path.startswith(existing_dir + os.sep) for existing_dir in filtered_dirs):
             filtered_dirs.append(dir_path)
     return filtered_dirs
+
+def format_size(size):
+    for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
+        if size < 1024:
+            return f"{size:.2f} {unit}"
+        size /= 1024
 
 def main():
     print("Select the base directory for the cleanup operation:")
@@ -73,22 +93,22 @@ def main():
         print("No search terms found. Exiting.")
         return
     
-    matching_dirs = scan_directories(base_directory, search_terms, ignore_terms)
+    matching_dirs, total_size = scan_directories(base_directory, search_terms, ignore_terms)
     matching_dirs = filter_top_level_directories(matching_dirs)
     
     if not matching_dirs:
         print("No directories found matching the search terms.")
         return
     
-    print("The following directories match your search terms:")
+    print(f"The following directories match your search terms (total size: {format_size(total_size)}):")
     for dir_path in matching_dirs:
         print(dir_path)
     
     confirm = input("Do you want to delete these directories? (y/n): ").strip().lower()
     
     if confirm == 'y':
-        delete_directories(matching_dirs)
-        print("Directories deleted successfully.")
+        total_size_freed = delete_directories(matching_dirs)
+        print(f"Directories deleted successfully. Space freed: {format_size(total_size_freed)}")
     else:
         print("Operation canceled.")
 
