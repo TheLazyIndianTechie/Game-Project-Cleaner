@@ -2,6 +2,10 @@ import os
 import shutil
 from tqdm import tqdm
 from tkinter import Tk, filedialog
+from colorama import Fore, Style, init
+
+# Initialize colorama
+init()
 
 def select_directory():
     Tk().withdraw()
@@ -19,7 +23,7 @@ def get_directory_size(path):
 def scan_directories(base_path, search_terms, ignore_terms):
     matching_dirs = []
     total_size = 0
-    for root, dirs, files in tqdm(os.walk(base_path), desc="Scanning directories"):
+    for root, dirs, files in tqdm(os.walk(base_path), desc=f"{Fore.CYAN}Scanning directories{Style.RESET_ALL}"):
         # Filter out ignored directories
         dirs[:] = [d for d in dirs if not any(ignore_term.lower() == d.lower() for ignore_term in ignore_terms)]
         for dir_name in dirs:
@@ -31,14 +35,14 @@ def scan_directories(base_path, search_terms, ignore_terms):
 
 def delete_directories(directories):
     total_size_freed = 0
-    for dir_path in tqdm(directories, desc="Deleting directories"):
+    for dir_path in tqdm(directories, desc=f"{Fore.RED}Deleting directories{Style.RESET_ALL}"):
         total_size_freed += get_directory_size(dir_path)
         try:
             shutil.rmtree(dir_path)
         except PermissionError:
-            print(f"Permission denied: {dir_path}")
+            print(f"{Fore.YELLOW}Permission denied:{Style.RESET_ALL} {dir_path}")
         except Exception as e:
-            print(f"Error deleting {dir_path}: {e}")
+            print(f"{Fore.YELLOW}Error deleting {dir_path}:{Style.RESET_ALL} {e}")
     return total_size_freed
 
 def get_terms(file_name):
@@ -62,14 +66,14 @@ def format_size(size):
         size /= 1024
 
 def main():
-    print("Select the base directory for the cleanup operation:")
+    print(f"{Fore.GREEN}Select the base directory for the cleanup operation:{Style.RESET_ALL}")
     base_directory = select_directory()
     
     if not base_directory:
-        print("No directory selected. Exiting.")
+        print(f"{Fore.RED}No directory selected. Exiting.{Style.RESET_ALL}")
         return
     
-    print("Choose the type of project to clean:")
+    print(f"{Fore.GREEN}Choose the type of project to clean:{Style.RESET_ALL}")
     print("1. Unity")
     print("2. Unreal")
     print("3. Godot")
@@ -82,7 +86,7 @@ def main():
     }
     
     if option not in file_map:
-        print("Invalid option. Exiting.")
+        print(f"{Fore.RED}Invalid option. Exiting.{Style.RESET_ALL}")
         return
     
     search_file, ignore_file = file_map[option]
@@ -90,27 +94,27 @@ def main():
     ignore_terms = get_terms(ignore_file)
     
     if not search_terms:
-        print("No search terms found. Exiting.")
+        print(f"{Fore.RED}No search terms found. Exiting.{Style.RESET_ALL}")
         return
     
     matching_dirs, total_size = scan_directories(base_directory, search_terms, ignore_terms)
     matching_dirs = filter_top_level_directories(matching_dirs)
     
     if not matching_dirs:
-        print("No directories found matching the search terms.")
+        print(f"{Fore.YELLOW}No directories found matching the search terms.{Style.RESET_ALL}")
         return
     
-    print(f"The following directories match your search terms (total size: {format_size(total_size)}):")
+    print(f"{Fore.GREEN}The following directories match your search terms (total size: {format_size(total_size)}):{Style.RESET_ALL}")
     for dir_path in matching_dirs:
-        print(dir_path)
+        print(f"{Fore.BLUE}{dir_path}{Style.RESET_ALL}")
     
-    confirm = input("Do you want to delete these directories? (y/n): ").strip().lower()
+    confirm = input(f"{Fore.CYAN}Do you want to delete these directories? (y/n): {Style.RESET_ALL}").strip().lower()
     
     if confirm == 'y':
         total_size_freed = delete_directories(matching_dirs)
-        print(f"Directories deleted successfully. Space freed: {format_size(total_size_freed)}")
+        print(f"{Fore.GREEN}Directories deleted successfully. Space freed: {format_size(total_size_freed)}{Style.RESET_ALL}")
     else:
-        print("Operation canceled.")
+        print(f"{Fore.YELLOW}Operation canceled.{Style.RESET_ALL}")
 
 if __name__ == "__main__":
     main()
